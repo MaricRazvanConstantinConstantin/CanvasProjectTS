@@ -13,7 +13,63 @@
     <title>Canvas basics</title>
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
-  <body class="min-h-screen flex items-center justify-center bg-gray-100">
+  <body
+    class="min-h-screen flex flex-col items-center justify-center bg-gray-100"
+  >
+    <header
+      class="sticky top-0 z-10 bg-white/90 backdrop-blur border-b border-gray-200"
+    >
+      <div
+        class="max-w-5xl mx-auto px-4 py-3 flex gap-3 items-center justify-between"
+      >
+        <h1 class="text-sm sm:text-base font-semibold text-gray-800">
+          Canvas Editor
+        </h1>
+
+        <div
+          id="toolBar"
+          class="inline-flex rounded-lg shadow-sm border border-gray-200 overflow-hidden"
+        >
+          <button
+            type="button"
+            class="px-3 sm:px-4 py-2 text-sm font-medium bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            data-tool="select"
+            aria-pressed="true"
+            title="Select (V)"
+          >
+            Select
+          </button>
+          <button
+            type="button"
+            class="px-3 sm:px-4 py-2 text-sm font-medium bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 border-l border-gray-200"
+            data-tool="circle"
+            aria-pressed="false"
+            title="Circle (C)"
+          >
+            Circle
+          </button>
+          <button
+            type="button"
+            class="px-3 sm:px-4 py-2 text-sm font-medium bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 border-l border-gray-200"
+            data-tool="square"
+            aria-pressed="false"
+            title="Square (S)"
+          >
+            Square
+          </button>
+          <button
+            type="button"
+            class="px-3 sm:px-4 py-2 text-sm font-medium bg-white text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 border-l border-gray-200"
+            data-tool="rectangle"
+            aria-pressed="false"
+            title="Rectangle (R)"
+          >
+            Rectangle
+          </button>
+        </div>
+      </div>
+    </header>
+
     <canvas
       id="canvas"
       class="border border-gray-300 rounded-lg shadow-md bg-white"

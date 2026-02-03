@@ -1,5 +1,5 @@
 import { type Shape } from '../interfaces/Shape';
-import { type Point, DEFAULT_TOL, between } from '../utils/geometry';
+import { type Point, between } from '../utils/geometry';
 
 export class Rectangle implements Shape {
   constructor(

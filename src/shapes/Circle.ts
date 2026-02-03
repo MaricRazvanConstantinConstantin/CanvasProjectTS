@@ -1,5 +1,5 @@
 import { type Shape } from '../interfaces/Shape';
-import { type Point, DEFAULT_TOL } from '../utils/geometry';
+import { type Point } from '../utils/geometry';
 
 export class Circle implements Shape {
   constructor(
