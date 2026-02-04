@@ -1,277 +1,148 @@
-// src/Canvas.ts
-import { type Shape } from '../interfaces/Shape';
-import { Circle } from '../shapes/Circle';
-import { Rectangle } from '../shapes/Rectangle';
-import { Square } from '../shapes/Square';
-import { type Point } from '../utils/geometry';
-import type { CanvasMode } from './CanvasMode';
+import type {Shape} from '../interfaces/Shape';
+import {Circle} from '../shapes/Circle';
+import {Rectangle} from '../shapes/Rectangle';
+import {Square} from '../shapes/Square';
+import type {Point} from '../utils/geometry';
+
+import type {CanvasMode, ModeContext} from './types';
+import {EventDispatcher} from './events/EventDispatcher';
 
 export class Canvas {
-  mousePosition: Point = { x: 0, y: 0 };
-  shapesList: Shape[] = [];
-  canvas: HTMLCanvasElement = document.getElementById(
-    'canvas',
-  ) as HTMLCanvasElement;
+    public shapesList: Shape[] = [];
+    public readonly canvasElement: HTMLCanvasElement;
 
-  #startPoint: Point = { x: 0, y: 0 };
-  #currentShape?: Shape | null;
-  #isDragging = false;
+    private currentMode: CanvasMode | null = null;
+    private eventDispatcher: EventDispatcher;
+    private needsRender = true;
+    private animationFrameId = 0;
 
-  #mode: CanvasMode = 'select';
-  #isCreating = false;
-  #createAnchor?: Point;
-  #previewShape?: Shape | null; //
-
-  constructor() {
-    this.canvas.height = window.innerHeight / 1.5;
-    this.canvas.width = window.innerWidth / 1.5;
-    this.configure();
-    this.initialiseShapesList();
-  }
-
-  setMode(mode: CanvasMode) {
-    this.#mode = mode;
-    this.#isCreating = false;
-    this.#previewShape = null;
-    this.#createAnchor = undefined;
-    this.drawShapes();
-  }
-
-  get mode(): CanvasMode {
-    return this.#mode;
-  }
-
-  configure() {
-    this.canvas.onmousedown = this.mouseDown.bind(this);
-    this.canvas.onmouseup = this.mouseUp.bind(this);
-    this.canvas.onmouseout = this.mouseOut.bind(this);
-    this.canvas.onmousemove = this.mouseMove.bind(this);
-  }
-
-  private getCanvasPoint(event: MouseEvent): Point {
-    const rect = this.canvas.getBoundingClientRect();
-    const scaleX = this.canvas.width / rect.width;
-    const scaleY = this.canvas.height / rect.height;
-
-    return {
-      x: (event.clientX - rect.left) * scaleX,
-      y: (event.clientY - rect.top) * scaleY,
-    };
-  }
-
-  mouseDown(event: MouseEvent) {
-    event.preventDefault();
-    const p = this.getCanvasPoint(event);
-
-    switch (this.#mode) {
-      case 'select': {
-        this.#startPoint = p;
-        for (const shape of this.shapesList) {
-          if (shape.isInShape(this.#startPoint)) {
-            this.#currentShape = shape;
-            this.#isDragging = true;
-            return;
-          }
+    constructor() {
+        const foundCanvas = document.getElementById(
+            'canvas',
+        ) as HTMLCanvasElement | null;
+        if (!foundCanvas) {
+            throw new Error(
+                'Canvas element with id="canvas" not found in the DOM.',
+            );
         }
-        this.#currentShape = null;
-        this.#isDragging = false;
-        return;
-      }
+        this.canvasElement = foundCanvas;
 
-      case 'create_circle':
-      case 'create_square':
-      case 'create_rectangle': {
-        this.#createAnchor = p;
-        this.#isCreating = true;
-        this.#previewShape = this.#makePreviewForMode(this.#mode, p, p);
-        this.drawShapesWithPreview();
-        return;
-      }
+        this.canvasElement.height = window.innerHeight / 1.5;
+        this.canvasElement.width = window.innerWidth / 1.5;
+
+        this.eventDispatcher = new EventDispatcher(this.canvasElement);
+        this.startRenderLoop();
+        this.initialiseShapesList();
     }
-  }
 
-  mouseMove(event: MouseEvent) {
-    const p = this.getCanvasPoint(event);
+    setMode(mode: CanvasMode): void {
+        if (this.currentMode?.onExit) {
+            this.currentMode.onExit(this.modeContext);
+        }
+        this.eventDispatcher.detach();
 
-    switch (this.#mode) {
-      case 'select': {
-        if (!this.#isDragging || !this.#currentShape) return;
+        this.currentMode = mode;
+        this.eventDispatcher.attach(mode.handlers(this.modeContext));
+        if (mode.onEnter) mode.onEnter(this.modeContext);
 
-        this.mousePosition = p;
-        const dx = this.mousePosition.x - this.#startPoint.x;
-        const dy = this.mousePosition.y - this.#startPoint.y;
+        this.requestRender();
+    }
 
-        this.#currentShape.updateReferencePoint(dx, dy);
-        this.drawShapes();
-        this.#startPoint = { ...this.mousePosition };
-        return;
-      }
+    getModeAttributes(): unknown {
+        return this.currentMode?.attributes;
+    }
 
-      case 'create_circle':
-      case 'create_square':
-      case 'create_rectangle': {
-        if (!this.#isCreating || !this.#createAnchor) return;
+    updateModeAttributes(patch: Record<string, unknown>): void {
+        if (!this.currentMode || !this.currentMode.updateAttributes) return;
+        this.currentMode.updateAttributes(patch as any);
+        this.requestRender();
+    }
 
-        this.#previewShape = this.#makePreviewForMode(
-          this.#mode,
-          this.#createAnchor,
-          p,
+    addShape(shape: Shape): void {
+        this.shapesList.push(shape);
+        this.requestRender();
+    }
+
+    private render(): void {
+        const renderingContext = this.getRenderingContext2D();
+        renderingContext.clearRect(
+            0,
+            0,
+            this.canvasElement.width,
+            this.canvasElement.height,
         );
-        this.drawShapesWithPreview();
-        return;
-      }
+
+        for (const shape of this.shapesList) {
+            shape.draw(renderingContext);
+        }
+
+        if (this.currentMode?.renderOverlay) {
+            this.currentMode.renderOverlay(this.modeContext);
+        }
     }
-  }
 
-  mouseUp(event: MouseEvent) {
-    event.preventDefault();
+    requestRender = (): void => {
+        this.needsRender = true;
+    };
 
-    switch (this.#mode) {
-      case 'select': {
-        if (!this.#isDragging) return;
-        this.#isDragging = false;
-        return;
-      }
-
-      case 'create_circle':
-      case 'create_square':
-      case 'create_rectangle': {
-        if (!this.#isCreating || !this.#createAnchor) return;
-
-        const p = this.getCanvasPoint(event);
-        const shape = this.#finalizeCreate(this.#mode, this.#createAnchor, p);
-        if (shape) this.addShape(shape);
-
-        this.#isCreating = false;
-        this.#createAnchor = undefined;
-        this.#previewShape = null;
-        this.drawShapes();
-        return;
-      }
+    private startRenderLoop(): void {
+        const tick = () => {
+            if (this.needsRender) {
+                this.render();
+                this.needsRender = false;
+            }
+            this.animationFrameId = requestAnimationFrame(tick);
+        };
+        this.animationFrameId = requestAnimationFrame(tick);
     }
-  }
 
-  mouseOut(event: MouseEvent) {
-    event.preventDefault();
-
-    switch (this.#mode) {
-      case 'select': {
-        if (!this.#isDragging) return;
-        this.#isDragging = false;
-        this.#currentShape = null;
-        return;
-      }
-
-      case 'create_circle':
-      case 'create_square':
-      case 'create_rectangle': {
-        if (!this.#isCreating) return;
-        this.#isCreating = false;
-        this.#createAnchor = undefined;
-        this.#previewShape = null;
-        this.drawShapes();
-        return;
-      }
+    destroy(): void {
+        cancelAnimationFrame(this.animationFrameId);
+        this.eventDispatcher.detach();
     }
-  }
 
-  #makePreviewForMode(
-    mode: CanvasMode,
-    anchor: Point,
-    current: Point,
-  ): Shape | null {
-    const dx = current.x - anchor.x;
-    const dy = current.y - anchor.y;
-
-    switch (mode) {
-      case 'create_circle': {
-        const radius = Math.max(1, Math.hypot(dx, dy));
-        return new Circle(anchor, radius, 'rgba(77,150,255,0.2)', '#4D96FF', 2);
-      }
-
-      case 'create_square': {
-        const side = Math.max(2, Math.max(Math.abs(dx), Math.abs(dy)) * 2);
-        const topLeft = { x: anchor.x - side / 2, y: anchor.y - side / 2 };
-        return new Square(topLeft, side, 'rgba(255,217,61,0.2)', '#6BCB77', 2);
-      }
-
-      case 'create_rectangle': {
-        const width = Math.max(2, Math.abs(dx) * 2);
-        const height = Math.max(2, Math.abs(dy) * 2);
-        const topLeft = { x: anchor.x - width / 2, y: anchor.y - height / 2 };
-        return new Rectangle(
-          topLeft,
-          width,
-          height,
-          'rgba(132,94,194,0.2)',
-          '#845EC2',
-          2,
-        );
-      }
-
-      default:
-        return null;
+    private getRenderingContext2D(): CanvasRenderingContext2D {
+        const renderingContext = this.canvasElement.getContext('2d');
+        if (!renderingContext)
+            throw new Error('2D rendering context not available.');
+        return renderingContext;
     }
-  }
 
-  #finalizeCreate(
-    mode: CanvasMode,
-    anchor: Point,
-    current: Point,
-  ): Shape | null {
-    const dx = current.x - anchor.x;
-    const dy = current.y - anchor.y;
+    private getCanvasPointFromMouseEvent(mouseEvent: MouseEvent): Point {
+        const boundingRect = this.canvasElement.getBoundingClientRect();
+        const scaleX = this.canvasElement.width / boundingRect.width;
+        const scaleY = this.canvasElement.height / boundingRect.height;
 
-    switch (mode) {
-      case 'create_circle': {
-        const radius = Math.max(1, Math.hypot(dx, dy));
-        return new Circle(anchor, radius, '#4D96FF', '#4D96FF', 3);
-      }
-      case 'create_square': {
-        const side = Math.max(2, Math.max(Math.abs(dx), Math.abs(dy)) * 2);
-        const topLeft = { x: anchor.x - side / 2, y: anchor.y - side / 2 };
-        return new Square(topLeft, side, '#FFD93D', '#6BCB77', 3);
-      }
-      case 'create_rectangle': {
-        const width = Math.max(2, Math.abs(dx) * 2);
-        const height = Math.max(2, Math.abs(dy) * 2);
-        const topLeft = { x: anchor.x - width / 2, y: anchor.y - height / 2 };
-        return new Rectangle(topLeft, width, height, '#845EC2', '#845EC2', 3);
-      }
-      default:
-        return null;
+        return {
+            x: (mouseEvent.clientX - boundingRect.left) * scaleX,
+            y: (mouseEvent.clientY - boundingRect.top) * scaleY,
+        };
     }
-  }
 
-  addShape(shape: Shape) {
-    this.shapesList.push(shape);
-    this.drawShapes();
-  }
-
-  drawShapes() {
-    const ctx = this.canvas.getContext('2d')!;
-    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.shapesList.forEach((shape) => shape.draw(ctx));
-  }
-
-  private drawShapesWithPreview() {
-    const ctx = this.canvas.getContext('2d')!;
-    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.shapesList.forEach((shape) => shape.draw(ctx));
-    if (this.#previewShape) {
-      this.#previewShape.draw(ctx);
+    private get modeContext(): ModeContext {
+        return {
+            canvasElement: this.canvasElement,
+            getRenderingContext2D: this.getRenderingContext2D.bind(this),
+            getShapes: () => this.shapesList,
+            addShape: (shape: Shape) => this.addShape(shape),
+            requestRender: this.requestRender,
+            getCanvasPointFromMouseEvent:
+                this.getCanvasPointFromMouseEvent.bind(this),
+            setCursor: (cursor: string) => {
+                this.canvasElement.style.cursor = cursor;
+            },
+        };
     }
-  }
 
-  initialiseShapesList() {
-    this.shapesList = [
-      new Circle({ x: 100, y: 120 }, 5, '#FF6B6B', '#FF6B6B', 5),
-      new Circle({ x: 220, y: 80 }, 7, '#4D96FF', '#4D96FF', 3),
-      new Square({ x: 50, y: 200 }, 60, '#6BCB77', '#FFD93D', 3),
-      new Square({ x: 140, y: 210 }, 30, '#FFD93D', '#6BCB77', 2),
-      new Rectangle({ x: 220, y: 180 }, 120, 60, '#845EC2', '#845EC2', 1),
-      new Rectangle({ x: 380, y: 60 }, 80, 30, '#2C73D2', '#845EC2', 3),
-    ];
-    this.drawShapes();
-  }
+    initialiseShapesList(): void {
+        this.shapesList = [
+            new Circle({x: 100, y: 120}, 5, '#FF6B6B', '#FF6B6B', 5),
+            new Circle({x: 220, y: 80}, 7, '#4D96FF', '#4D96FF', 3),
+            new Square({x: 50, y: 200}, 60, '#6BCB77', '#FFD93D', 3),
+            new Square({x: 140, y: 210}, 30, '#FFD93D', '#6BCB77', 2),
+            new Rectangle({x: 220, y: 180}, 120, 60, '#845EC2', '#845EC2', 1),
+            new Rectangle({x: 380, y: 60}, 80, 30, '#2C73D2', '#845EC2', 3),
+        ];
+        this.requestRender();
+    }
 }
