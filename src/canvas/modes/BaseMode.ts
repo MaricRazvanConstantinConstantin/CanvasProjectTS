@@ -1,9 +1,4 @@
-import type {
-    CanvasMode,
-    ModeAttributes,
-    ModeContext,
-    EventMap,
-} from '../canvas/types';
+import type {CanvasMode, ModeAttributes, ModeContext, EventMap} from '../types';
 
 export abstract class BaseMode<
     A extends ModeAttributes,

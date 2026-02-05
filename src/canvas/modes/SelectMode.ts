@@ -1,6 +1,6 @@
-import type {Shape} from '../interfaces/Shape';
-import type {Point} from '../utils/geometry';
-import type {EventMap, ModeContext, ModeAttributes} from '../canvas/types';
+import type {Shape} from '../../interfaces/Shape';
+import type {Point} from '../../utils/geometry';
+import type {EventMap, ModeContext, ModeAttributes} from '../types';
 import {BaseMode} from './BaseMode';
 
 export interface SelectModeAttributes extends ModeAttributes {
@@ -14,8 +14,12 @@ export class SelectMode extends BaseMode<SelectModeAttributes> {
     private currentShape: Shape | null = null;
 
     handlers(context: ModeContext): EventMap {
-        const {requestRender, getShapes, getCanvasPointFromMouseEvent} =
-            context;
+        const {
+            requestRender,
+            getShapes,
+            getCanvasPointFromMouseEvent,
+            reportAction,
+        } = context;
 
         return {
             mousedown: (mouseEvent: MouseEvent) => {
@@ -26,10 +30,12 @@ export class SelectMode extends BaseMode<SelectModeAttributes> {
                 this.currentShape = null;
 
                 for (const shape of getShapes()) {
-                    // No tolerance — exact hit detection
                     if (shape.isInShape(canvasPoint)) {
                         this.currentShape = shape;
                         this.isDragging = true;
+                        reportAction?.(
+                            `Picked shape for dragging at (${Math.round(canvasPoint.x)}, ${Math.round(canvasPoint.y)})`,
+                        );
                         break;
                     }
                 }
@@ -55,10 +61,16 @@ export class SelectMode extends BaseMode<SelectModeAttributes> {
             },
 
             mouseup: () => {
+                if (this.isDragging && this.currentShape) {
+                    reportAction?.('Finished dragging shape');
+                }
                 this.isDragging = false;
             },
 
             mouseout: () => {
+                if (this.isDragging) {
+                    reportAction?.('Drag cancelled (mouse left canvas)');
+                }
                 this.isDragging = false;
                 this.currentShape = null;
             },
@@ -67,5 +79,6 @@ export class SelectMode extends BaseMode<SelectModeAttributes> {
 
     onEnter(context: ModeContext): void {
         context.setCursor(this.attributes.cursor ?? 'default');
+        context.reportAction?.('Entered Select mode');
     }
 }

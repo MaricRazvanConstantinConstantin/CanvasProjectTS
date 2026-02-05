@@ -6,6 +6,7 @@ import type {Point} from '../utils/geometry';
 
 import type {CanvasMode, ModeContext} from './types';
 import {EventDispatcher} from './events/EventDispatcher';
+import {LogWindow, type LogSnapshot} from '../ui/LogWindow';
 
 export class Canvas {
     public shapesList: Shape[] = [];
@@ -15,6 +16,10 @@ export class Canvas {
     private eventDispatcher: EventDispatcher;
     private needsRender = true;
     private animationFrameId = 0;
+
+    private logWindow: LogWindow | null = null;
+    private lastCursorPoint: Point | null = null;
+    private lastActionMessage: string | undefined = undefined;
 
     constructor() {
         const foundCanvas = document.getElementById(
@@ -33,6 +38,12 @@ export class Canvas {
         this.eventDispatcher = new EventDispatcher(this.canvasElement);
         this.startRenderLoop();
         this.initialiseShapesList();
+
+        this.canvasElement.addEventListener('mousemove', (mouseEvent) => {
+            this.lastCursorPoint =
+                this.getCanvasPointFromMouseEvent(mouseEvent);
+            this.requestRender();
+        });
     }
 
     setMode(mode: CanvasMode): void {
@@ -61,24 +72,6 @@ export class Canvas {
     addShape(shape: Shape): void {
         this.shapesList.push(shape);
         this.requestRender();
-    }
-
-    private render(): void {
-        const renderingContext = this.getRenderingContext2D();
-        renderingContext.clearRect(
-            0,
-            0,
-            this.canvasElement.width,
-            this.canvasElement.height,
-        );
-
-        for (const shape of this.shapesList) {
-            shape.draw(renderingContext);
-        }
-
-        if (this.currentMode?.renderOverlay) {
-            this.currentMode.renderOverlay(this.modeContext);
-        }
     }
 
     requestRender = (): void => {
@@ -131,6 +124,7 @@ export class Canvas {
             setCursor: (cursor: string) => {
                 this.canvasElement.style.cursor = cursor;
             },
+            reportAction: (message: string) => this.pushAction(message),
         };
     }
 
@@ -144,5 +138,46 @@ export class Canvas {
             new Rectangle({x: 380, y: 60}, 80, 30, '#2C73D2', '#845EC2', 3),
         ];
         this.requestRender();
+    }
+
+    attachLogWindow(logWindow: LogWindow): void {
+        this.logWindow = logWindow;
+        this.requestRender();
+    }
+
+    pushAction(message: string): void {
+        this.lastActionMessage = message;
+        this.requestRender();
+    }
+
+    private render(): void {
+        const renderingContext = this.getRenderingContext2D();
+        renderingContext.clearRect(
+            0,
+            0,
+            this.canvasElement.width,
+            this.canvasElement.height,
+        );
+
+        for (const shape of this.shapesList) {
+            shape.draw(renderingContext);
+        }
+
+        if (this.currentMode?.renderOverlay) {
+            this.currentMode.renderOverlay(this.modeContext);
+        }
+
+        if (this.logWindow) {
+            const snapshot: LogSnapshot = {
+                modeName: this.currentMode?.attributes?.name ?? '-',
+                cursorX: this.lastCursorPoint?.x ?? null,
+                cursorY: this.lastCursorPoint?.y ?? null,
+                canvasBufferWidth: this.canvasElement.width,
+                canvasBufferHeight: this.canvasElement.height,
+                shapesCount: this.shapesList.length,
+                lastAction: this.lastActionMessage!,
+            };
+            this.logWindow.render(snapshot);
+        }
     }
 }

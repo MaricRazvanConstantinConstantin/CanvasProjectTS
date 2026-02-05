@@ -15,17 +15,25 @@ export interface ModeAttributes {
     cursor?: string;
 }
 
+export interface CommonCreateAttributes extends ModeAttributes {
+    previewFillColor: string;
+    previewStrokeColor: string;
+    previewLineWidth: number;
+
+    finalFillColor: string;
+    finalStrokeColor: string;
+    finalLineWidth: number;
+}
+
 export interface ModeContext {
     canvasElement: HTMLCanvasElement;
     getRenderingContext2D: () => CanvasRenderingContext2D;
     getShapes: () => Shape[];
     addShape: (shape: Shape) => void;
-
     requestRender: () => void;
-
     getCanvasPointFromMouseEvent: (mouseEvent: MouseEvent) => Point;
-
     setCursor: (cursor: string) => void;
+    reportAction?: (message: string) => void;
 }
 
 export interface CanvasMode<A extends ModeAttributes = ModeAttributes> {

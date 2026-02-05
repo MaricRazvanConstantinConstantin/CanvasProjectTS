@@ -1,19 +1,15 @@
-import {Square} from '../shapes/Square';
-import type {Point} from '../utils/geometry';
-import type {EventMap, ModeContext, ModeAttributes} from '../canvas/types';
+import {Square} from '../../shapes/Square';
+import type {Point} from '../../utils/geometry';
+import type {
+    EventMap,
+    ModeContext,
+    ModeAttributes,
+    CommonCreateAttributes,
+} from '../types';
 import {BaseMode} from './BaseMode';
 
-export interface CreateSquareAttributes extends ModeAttributes {
+export interface CreateSquareAttributes extends CommonCreateAttributes {
     name: 'create_square';
-    previewFillColor: string;
-    previewStrokeColor: string;
-    previewLineWidth: number;
-
-    finalFillColor: string;
-    finalStrokeColor: string;
-    finalLineWidth: number;
-
-    cursor?: string;
 }
 
 export class CreateSquareMode extends BaseMode<CreateSquareAttributes> {
@@ -23,7 +19,12 @@ export class CreateSquareMode extends BaseMode<CreateSquareAttributes> {
     private previewSide = 0;
 
     handlers(context: ModeContext): EventMap {
-        const {requestRender, addShape, getCanvasPointFromMouseEvent} = context;
+        const {
+            requestRender,
+            addShape,
+            getCanvasPointFromMouseEvent,
+            reportAction,
+        } = context;
 
         return {
             mousedown: (mouseEvent: MouseEvent) => {
@@ -31,6 +32,9 @@ export class CreateSquareMode extends BaseMode<CreateSquareAttributes> {
                 this.isCreating = true;
                 this.previewTopLeft = this.anchorPoint;
                 this.previewSide = 0;
+                reportAction?.(
+                    `Start square at (${Math.round(this.anchorPoint.x)}, ${Math.round(this.anchorPoint.y)})`,
+                );
                 requestRender();
             },
 
@@ -67,6 +71,10 @@ export class CreateSquareMode extends BaseMode<CreateSquareAttributes> {
                     this.attributes.finalLineWidth,
                 );
                 addShape(square);
+
+                reportAction?.(
+                    `Created rectangle topleft-corner=(${Math.round(square.topLeftCorner.x)}, ${Math.round(square.topLeftCorner.y)}) side=${Math.round(square.height)}`,
+                );
 
                 this.isCreating = false;
                 this.anchorPoint = null;
@@ -116,5 +124,6 @@ export class CreateSquareMode extends BaseMode<CreateSquareAttributes> {
 
     onEnter(context: ModeContext): void {
         context.setCursor(this.attributes.cursor ?? 'crosshair');
+        context.reportAction?.('Entered Create Circle mode');
     }
 }

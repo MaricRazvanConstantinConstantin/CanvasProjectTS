@@ -1,19 +1,19 @@
 import {Canvas} from './canvas/Canvas';
 import {Toolbar, type ToolName} from './toolbar';
 
-import {SelectMode} from './modes/SelectMode';
-import {CreateCircleMode} from './modes/CreateCircleMode';
-import {CreateSquareMode} from './modes/CreateSquareMode';
-import {CreateRectangleMode} from './modes/CreateRectangleMode';
+import {SelectMode} from './canvas/modes/SelectMode';
+import {CreateCircleMode} from './canvas/modes/CreateCircleMode';
+import {CreateSquareMode} from './canvas/modes/CreateSquareMode';
+import {CreateRectangleMode} from './canvas/modes/CreateRectangleMode';
+
+import {LogWindow} from './ui/LogWindow';
+
+import {initStyleControls} from './ui/StyleControls';
 
 function makeModeForTool(tool: ToolName) {
     switch (tool) {
         case 'select':
-            return new SelectMode({
-                name: 'select',
-                cursor: 'default',
-            });
-
+            return new SelectMode({name: 'select', cursor: 'default'});
         case 'circle':
             return new CreateCircleMode({
                 name: 'create_circle',
@@ -25,7 +25,6 @@ function makeModeForTool(tool: ToolName) {
                 finalStrokeColor: '#4D96FF',
                 finalLineWidth: 3,
             });
-
         case 'square':
             return new CreateSquareMode({
                 name: 'create_square',
@@ -37,7 +36,6 @@ function makeModeForTool(tool: ToolName) {
                 finalStrokeColor: '#6BCB77',
                 finalLineWidth: 3,
             });
-
         case 'rectangle':
             return new CreateRectangleMode({
                 name: 'create_rectangle',
@@ -52,8 +50,20 @@ function makeModeForTool(tool: ToolName) {
     }
 }
 
+function isCreateModeName(modeName: string | undefined): boolean {
+    return !!modeName && modeName.startsWith('create_');
+}
+
 function main() {
     const canvas = new Canvas();
+
+    const logRoot = document.getElementById('logWindow');
+    if (logRoot) {
+        const logger = new LogWindow(logRoot);
+        canvas.attachLogWindow(logger);
+    }
+
+    const styleControls = initStyleControls(canvas);
 
     const toolbarRoot = document.getElementById('toolBar');
     if (!toolbarRoot) {
@@ -67,12 +77,26 @@ function main() {
         enableShortcuts: false,
         onChange: (tool) => {
             const mode = makeModeForTool(tool);
-            if (mode) canvas.setMode(mode);
+            if (!mode) return;
+
+            canvas.setMode(mode);
+            canvas.pushAction(`Mode changed to "${mode.attributes.name}"`);
+
+            const visible = isCreateModeName(mode.attributes.name);
+            styleControls.setVisible(visible);
+
+            if (visible) {
+                styleControls.applyToActiveMode();
+            }
         },
     });
 
     const initialMode = makeModeForTool('select');
-    if (initialMode) canvas.setMode(initialMode);
+    if (initialMode) {
+        canvas.setMode(initialMode);
+        canvas.pushAction('Initial mode set to "select"');
+        styleControls.setVisible(false);
+    }
 }
 
 if (document.readyState === 'loading') {

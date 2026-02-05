@@ -1,19 +1,15 @@
-import {Circle} from '../shapes/Circle';
-import type {Point} from '../utils/geometry';
-import type {EventMap, ModeContext, ModeAttributes} from '../canvas/types';
+import {Circle} from '../../shapes/Circle';
+import type {Point} from '../../utils/geometry';
+import type {
+    EventMap,
+    ModeContext,
+    ModeAttributes,
+    CommonCreateAttributes,
+} from '../types';
 import {BaseMode} from './BaseMode';
 
-export interface CreateCircleAttributes extends ModeAttributes {
+export interface CreateCircleAttributes extends CommonCreateAttributes {
     name: 'create_circle';
-    previewFillColor: string;
-    previewStrokeColor: string;
-    previewLineWidth: number;
-
-    finalFillColor: string;
-    finalStrokeColor: string;
-    finalLineWidth: number;
-
-    cursor?: string;
 }
 
 export class CreateCircleMode extends BaseMode<CreateCircleAttributes> {
@@ -22,13 +18,21 @@ export class CreateCircleMode extends BaseMode<CreateCircleAttributes> {
     private previewRadius = 0;
 
     handlers(context: ModeContext): EventMap {
-        const {requestRender, addShape, getCanvasPointFromMouseEvent} = context;
+        const {
+            requestRender,
+            addShape,
+            getCanvasPointFromMouseEvent,
+            reportAction,
+        } = context;
 
         return {
             mousedown: (mouseEvent: MouseEvent) => {
                 this.anchorPoint = getCanvasPointFromMouseEvent(mouseEvent);
                 this.isCreating = true;
                 this.previewRadius = 0;
+                reportAction?.(
+                    `Start circle at (${Math.round(this.anchorPoint.x)}, ${Math.round(this.anchorPoint.y)})`,
+                );
                 requestRender();
             },
 
@@ -57,6 +61,10 @@ export class CreateCircleMode extends BaseMode<CreateCircleAttributes> {
                 );
                 addShape(circle);
 
+                reportAction?.(
+                    `Created circle center=(${Math.round(this.anchorPoint.x)}, ${Math.round(this.anchorPoint.y)}) radius=${Math.round(radius)}`,
+                );
+
                 this.isCreating = false;
                 this.anchorPoint = null;
                 this.previewRadius = 0;
@@ -64,6 +72,8 @@ export class CreateCircleMode extends BaseMode<CreateCircleAttributes> {
             },
 
             mouseout: () => {
+                if (this.isCreating)
+                    reportAction?.('Circle creation cancelled');
                 this.isCreating = false;
                 this.anchorPoint = null;
                 this.previewRadius = 0;
