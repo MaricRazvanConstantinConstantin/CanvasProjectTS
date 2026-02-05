@@ -1,11 +1,6 @@
 import {Circle} from '../../shapes/Circle';
 import type {Point} from '../../utils/geometry';
-import type {
-    EventMap,
-    ModeContext,
-    ModeAttributes,
-    CommonCreateAttributes,
-} from '../types';
+import type {EventMap, ModeContext, CommonCreateAttributes} from '../types';
 import {BaseMode} from './BaseMode';
 
 export interface CreateCircleAttributes extends CommonCreateAttributes {

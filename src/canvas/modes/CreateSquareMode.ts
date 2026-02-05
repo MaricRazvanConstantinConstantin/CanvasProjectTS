@@ -1,11 +1,6 @@
 import {Square} from '../../shapes/Square';
 import type {Point} from '../../utils/geometry';
-import type {
-    EventMap,
-    ModeContext,
-    ModeAttributes,
-    CommonCreateAttributes,
-} from '../types';
+import type {EventMap, ModeContext, CommonCreateAttributes} from '../types';
 import {BaseMode} from './BaseMode';
 
 export interface CreateSquareAttributes extends CommonCreateAttributes {
@@ -84,6 +79,8 @@ export class CreateSquareMode extends BaseMode<CreateSquareAttributes> {
             },
 
             mouseout: () => {
+                if (this.isCreating)
+                    reportAction?.('Square creation cancelled');
                 this.isCreating = false;
                 this.anchorPoint = null;
                 this.previewTopLeft = null;

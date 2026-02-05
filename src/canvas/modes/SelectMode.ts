@@ -1,4 +1,4 @@
-import type {Shape} from '../../interfaces/Shape';
+import type {Shape} from '../../shapes/interfaces/Shape';
 import type {Point} from '../../utils/geometry';
 import type {EventMap, ModeContext, ModeAttributes} from '../types';
 import {BaseMode} from './BaseMode';

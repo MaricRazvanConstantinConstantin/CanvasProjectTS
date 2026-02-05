@@ -1,4 +1,4 @@
-import type {Shape} from '../interfaces/Shape';
+import type {Shape} from '../shapes/interfaces/Shape';
 import {Circle} from '../shapes/Circle';
 import {Rectangle} from '../shapes/Rectangle';
 import {Square} from '../shapes/Square';
