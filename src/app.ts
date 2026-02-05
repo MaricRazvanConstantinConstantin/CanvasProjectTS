@@ -57,11 +57,8 @@ function isCreateModeName(modeName: string | undefined): boolean {
 function main() {
     const canvas = new Canvas();
 
-    const logRoot = document.getElementById('logWindow');
-    if (logRoot) {
-        const logger = new LogWindow(logRoot);
-        canvas.attachLogWindow(logger);
-    }
+    const logger = new LogWindow();
+    canvas.attachLogWindow(logger);
 
     const styleControls = initStyleControls(canvas);
 

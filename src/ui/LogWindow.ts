@@ -9,12 +9,9 @@ export type LogSnapshot = {
 };
 
 export class LogWindow {
-    private rootElement: HTMLElement;
     private fields: Record<string, HTMLElement>;
 
-    constructor(rootElement: HTMLElement) {
-        this.rootElement = rootElement;
-
+    constructor() {
         const byId = (id: string) => {
             const element = document.getElementById(id);
             if (!element)
