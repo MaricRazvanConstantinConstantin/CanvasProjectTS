@@ -19,7 +19,7 @@ export class Canvas {
 
     private logWindow: LogWindow | null = null;
     private lastCursorPoint: Point | null = null;
-    private lastActionMessage: string | undefined = undefined;
+    private lastActionMessage: string | null = null;
 
     constructor() {
         const foundCanvas = document.getElementById(
@@ -65,7 +65,7 @@ export class Canvas {
 
     updateModeAttributes(patch: Record<string, unknown>): void {
         if (!this.currentMode || !this.currentMode.updateAttributes) return;
-        this.currentMode.updateAttributes(patch as any);
+        this.currentMode.updateAttributes(patch);
         this.requestRender();
     }
 
@@ -175,7 +175,7 @@ export class Canvas {
                 canvasBufferWidth: this.canvasElement.width,
                 canvasBufferHeight: this.canvasElement.height,
                 shapesCount: this.shapesList.length,
-                lastAction: this.lastActionMessage!,
+                lastAction: this.lastActionMessage ?? '-',
             };
             this.logWindow.render(snapshot);
         }

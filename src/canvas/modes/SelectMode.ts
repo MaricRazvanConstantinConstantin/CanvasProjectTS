@@ -33,7 +33,7 @@ export class SelectMode extends BaseMode<SelectModeAttributes> {
                     if (shape.isInShape(canvasPoint)) {
                         this.currentShape = shape;
                         this.isDragging = true;
-                        reportAction?.(
+                        reportAction(
                             `Picked shape for dragging at (${Math.round(canvasPoint.x)}, ${Math.round(canvasPoint.y)})`,
                         );
                         break;
@@ -62,14 +62,14 @@ export class SelectMode extends BaseMode<SelectModeAttributes> {
 
             mouseup: () => {
                 if (this.isDragging && this.currentShape) {
-                    reportAction?.('Finished dragging shape');
+                    reportAction('Finished dragging shape');
                 }
                 this.isDragging = false;
             },
 
             mouseout: () => {
                 if (this.isDragging) {
-                    reportAction?.('Drag cancelled (mouse left canvas)');
+                    reportAction('Drag cancelled (mouse left canvas)');
                 }
                 this.isDragging = false;
                 this.currentShape = null;
@@ -79,6 +79,5 @@ export class SelectMode extends BaseMode<SelectModeAttributes> {
 
     onEnter(context: ModeContext): void {
         context.setCursor(this.attributes.cursor ?? 'default');
-        context.reportAction?.('Entered Select mode');
     }
 }

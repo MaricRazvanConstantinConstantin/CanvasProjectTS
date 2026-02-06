@@ -27,7 +27,7 @@ export class CreateSquareMode extends BaseMode<CreateSquareAttributes> {
                 this.isCreating = true;
                 this.previewTopLeft = this.anchorPoint;
                 this.previewSide = 0;
-                reportAction?.(
+                reportAction(
                     `Start square at (${Math.round(this.anchorPoint.x)}, ${Math.round(this.anchorPoint.y)})`,
                 );
                 requestRender();
@@ -67,7 +67,7 @@ export class CreateSquareMode extends BaseMode<CreateSquareAttributes> {
                 );
                 addShape(square);
 
-                reportAction?.(
+                reportAction(
                     `Created rectangle topleft-corner=(${Math.round(square.topLeftCorner.x)}, ${Math.round(square.topLeftCorner.y)}) side=${Math.round(square.height)}`,
                 );
 
@@ -79,8 +79,7 @@ export class CreateSquareMode extends BaseMode<CreateSquareAttributes> {
             },
 
             mouseout: () => {
-                if (this.isCreating)
-                    reportAction?.('Square creation cancelled');
+                if (this.isCreating) reportAction('Square creation cancelled');
                 this.isCreating = false;
                 this.anchorPoint = null;
                 this.previewTopLeft = null;
@@ -121,6 +120,5 @@ export class CreateSquareMode extends BaseMode<CreateSquareAttributes> {
 
     onEnter(context: ModeContext): void {
         context.setCursor(this.attributes.cursor ?? 'crosshair');
-        context.reportAction?.('Entered Create Circle mode');
     }
 }

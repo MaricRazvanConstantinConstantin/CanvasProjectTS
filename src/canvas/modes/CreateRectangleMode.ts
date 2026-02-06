@@ -29,7 +29,7 @@ export class CreateRectangleMode extends BaseMode<CreateRectangleAttributes> {
                 this.previewTopLeft = this.anchorPoint;
                 this.previewWidth = 0;
                 this.previewHeight = 0;
-                reportAction?.(
+                reportAction(
                     `Start rectangle at (${Math.round(this.anchorPoint.x)}, ${Math.round(this.anchorPoint.y)})`,
                 );
                 requestRender();
@@ -71,7 +71,7 @@ export class CreateRectangleMode extends BaseMode<CreateRectangleAttributes> {
 
                 addShape(rectangle);
 
-                reportAction?.(
+                reportAction(
                     `Created rectangle topleft-corner=(${Math.round(rectangle.topLeftCorner.x)}, ${Math.round(rectangle.topLeftCorner.y)}) height=${Math.round(rectangle.height)} width=${Math.round(rectangle.width)}`,
                 );
 
@@ -85,7 +85,7 @@ export class CreateRectangleMode extends BaseMode<CreateRectangleAttributes> {
 
             mouseout: () => {
                 if (this.isCreating)
-                    reportAction?.('Rectangle creation cancelled');
+                    reportAction('Rectangle creation cancelled');
                 this.isCreating = false;
                 this.anchorPoint = null;
                 this.previewTopLeft = null;

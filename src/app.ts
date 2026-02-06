@@ -80,6 +80,7 @@ function main() {
             canvas.pushAction(`Mode changed to "${mode.attributes.name}"`);
 
             const visible = isCreateModeName(mode.attributes.name);
+            console.log('show styles');
             styleControls.setVisible(visible);
 
             if (visible) {

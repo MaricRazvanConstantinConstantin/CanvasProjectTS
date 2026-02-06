@@ -4,42 +4,35 @@
         <meta charset="UTF-8" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Canvas basics</title>
-        <script src="https://cdn.tailwindcss.com"></script>
+        <title>Canvas Editor</title>
+        <link rel="stylesheet" href="/styles.css" />
     </head>
-    <body class="min-h-screen bg-gray-100 flex flex-col">
-        <div class="flex gap-4 justify-center items-start mt-6">
-            <div
-                id="toolBar"
-                class="self-start flex flex-col border border-gray-300 rounded-lg shadow bg-white"
-            >
+
+    <body>
+        <div id="layoutRow">
+            <div id="toolBar">
                 <button
                     type="button"
-                    class="p-3 hover:bg-gray-100"
                     data-tool="select"
                     aria-pressed="true"
                     title="Select"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        class="w-5 h-5"
                         fill="currentColor"
                         viewBox="0 0 24 24"
                     >
                         <path d="M3 2l7.5 18 2-7 7-2L3 2z" />
                     </svg>
                 </button>
-
                 <button
                     type="button"
-                    class="p-3 hover:bg-gray-100 border-t border-gray-200"
                     data-tool="circle"
                     aria-pressed="false"
                     title="Circle"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        class="w-5 h-5"
                         fill="none"
                         stroke="currentColor"
                         stroke-width="2"
@@ -48,17 +41,14 @@
                         <circle cx="12" cy="12" r="7" />
                     </svg>
                 </button>
-
                 <button
                     type="button"
-                    class="p-3 hover:bg-gray-100 border-t border-gray-200"
                     data-tool="square"
                     aria-pressed="false"
                     title="Square"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        class="w-5 h-5"
                         fill="none"
                         stroke="currentColor"
                         stroke-width="2"
@@ -67,17 +57,14 @@
                         <rect x="6" y="6" width="12" height="12" />
                     </svg>
                 </button>
-
                 <button
                     type="button"
-                    class="p-3 hover:bg-gray-100 border-t border-gray-200"
                     data-tool="rectangle"
                     aria-pressed="false"
                     title="Rectangle"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        class="w-5 h-5"
                         fill="none"
                         stroke="currentColor"
                         stroke-width="2"
@@ -88,42 +75,30 @@
                 </button>
             </div>
 
-            <section
-                id="styleControls"
-                class="hidden w-25 max-w-[90vw] bg-white border border-gray-300 rounded-lg shadow p-3 self-start"
-            >
-                <header class="font-semibold text-gray-900 mb-3">Style</header>
-                <div class="space-y-3">
-                    <div class="grid grid-cols-[auto_1fr] items-center gap-x-2">
-                        <label for="inputFillColor" class="text-gray-600"
-                            >Fill</label
-                        >
+            <section id="styleControls" class="hidden">
+                <header>Style</header>
+
+                <div class="controls">
+                    <div class="row">
+                        <label for="inputFillColor">Fill</label>
                         <input
                             id="inputFillColor"
                             type="color"
                             value="#4D96FF"
-                            class="w-28 h-9 border rounded cursor-pointer"
-                            title="Fill color"
                         />
                     </div>
 
-                    <div class="grid grid-cols-[auto_1fr] items-center gap-x-2">
-                        <label for="inputStrokeColor" class="text-gray-600"
-                            >Stroke</label
-                        >
+                    <div class="row">
+                        <label for="inputStrokeColor">Stroke</label>
                         <input
                             id="inputStrokeColor"
                             type="color"
                             value="#4D96FF"
-                            class="w-28 h-9 border rounded cursor-pointer"
-                            title="Stroke color"
                         />
                     </div>
 
-                    <div class="grid grid-cols-[auto_1fr] items-center gap-x-2">
-                        <label for="inputLineWidth" class="text-gray-600"
-                            >Line width</label
-                        >
+                    <div class="row">
+                        <label for="inputLineWidth">Line width</label>
                         <input
                             id="inputLineWidth"
                             type="number"
@@ -131,51 +106,35 @@
                             max="20"
                             step="1"
                             value="3"
-                            class="w-24 h-9 border rounded px-2"
-                            title="Stroke width"
                         />
                     </div>
 
                     <div>
-                        <div class="text-gray-600 mb-1">Swatches</div>
-                        <div id="swatches" class="flex gap-2 flex-wrap">
+                        <div class="swatchLabel">Swatches</div>
+                        <div id="swatches">
                             <button
-                                type="button"
                                 data-fill="#4D96FF"
                                 data-stroke="#4D96FF"
-                                class="w-6 h-6 rounded border"
                                 style="background: #4d96ff"
-                                title="#4D96FF"
                             ></button>
                             <button
-                                type="button"
                                 data-fill="#FFD93D"
                                 data-stroke="#6BCB77"
-                                class="w-6 h-6 rounded border"
                                 style="background: #ffd93d"
-                                title="#FFD93D / #6BCB77"
                             ></button>
                             <button
-                                type="button"
                                 data-fill="#845EC2"
                                 data-stroke="#845EC2"
-                                class="w-6 h-6 rounded border"
                                 style="background: #845ec2"
-                                title="#845EC2"
                             ></button>
                             <button
-                                type="button"
                                 data-fill="#FF6B6B"
                                 data-stroke="#FF6B6B"
-                                class="w-6 h-6 rounded border"
                                 style="background: #ff6b6b"
-                                title="#FF6B6B"
                             ></button>
                             <button
-                                type="button"
                                 data-fill="#2C73D2"
                                 data-stroke="#845EC2"
-                                class="w-6 h-6 rounded border"
                                 style="
                                     background: linear-gradient(
                                         45deg,
@@ -183,37 +142,28 @@
                                         #845ec2
                                     );
                                 "
-                                title="#2C73D2 / #845EC2"
                             ></button>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <canvas
-                id="canvas"
-                class="border border-gray-300 rounded-lg shadow-md bg-white"
-            ></canvas>
+            <canvas id="canvas"></canvas>
 
-            <section
-                id="logWindow"
-                class="w-72 bg-white/95 backdrop-blur border border-gray-200 rounded-lg shadow-md p-3 text-sm text-gray-800 self-start"
-                aria-live="polite"
-                aria-atomic="true"
-            >
-                <header class="font-semibold mb-2">Debug Log</header>
-                <dl class="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1">
-                    <dt class="text-gray-500">Mode</dt>
+            <section id="logWindow" aria-live="polite" aria-atomic="true">
+                <header>Debug Log</header>
+                <dl>
+                    <dt>Mode</dt>
                     <dd id="logMode">-</dd>
-                    <dt class="text-gray-500">Cursor X</dt>
+                    <dt>Cursor X</dt>
                     <dd id="logCursorX">-</dd>
-                    <dt class="text-gray-500">Cursor Y</dt>
+                    <dt>Cursor Y</dt>
                     <dd id="logCursorY">-</dd>
-                    <dt class="text-gray-500">Canvas Buffer</dt>
+                    <dt>Canvas Buffer</dt>
                     <dd id="logCanvasBuffer">-</dd>
-                    <dt class="text-gray-500">Shapes</dt>
+                    <dt>Shapes</dt>
                     <dd id="logShapes">-</dd>
-                    <dt class="text-gray-500">Last Action</dt>
+                    <dt>Last Action</dt>
                     <dd id="lastAction">-</dd>
                 </dl>
             </section>

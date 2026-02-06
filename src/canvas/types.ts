@@ -33,7 +33,7 @@ export interface ModeContext {
     requestRender: () => void;
     getCanvasPointFromMouseEvent: (mouseEvent: MouseEvent) => Point;
     setCursor: (cursor: string) => void;
-    reportAction?: (message: string) => void;
+    reportAction: (message: string) => void;
 }
 
 export interface CanvasMode<A extends ModeAttributes = ModeAttributes> {
